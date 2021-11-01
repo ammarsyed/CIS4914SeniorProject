@@ -12,7 +12,11 @@ def main():
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thinned = cv2.ximgproc.thinning(cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY), thinningType=cv2.ximgproc.THINNING_ZHANGSUEN)
 
-    sobel = cv2.Sobel(src=thinned, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=5)
+    #sobel = cv2.Sobel(src=thinned, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=5)
+    img_sobelx = cv2.Sobel(thinned, cv2.CV_8U, 1, 0, ksize=5)
+    img_sobely = cv2.Sobel(thinned, cv2.CV_8U, 0, 1, ksize=5)
+
+    sobel = img_sobelx + img_sobely
     # cv2.imshow("sobel", sobel)
 
     edges = cv2.Canny(image=thinned, threshold1=100, threshold2=200)
