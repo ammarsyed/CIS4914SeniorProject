@@ -9,7 +9,7 @@ def main():
     # HannahFilePath = "/Users/hannahsoliman/Desktop/CIS4914SeniorProject/GT_Peanut_T032_L029_2017.06.08_162402_EED_DPI120.png"
     NavidFilePath = "C:/Users/Glados/Desktop/Peanut_MR/test/masks_pixel_gt//Peanut_640x480_DPI120/GT_Peanut_T003_L015_2017.06.15_080652_EED_DPI120.png"
 
-    img = cv2.imread(HannahFilePath, 1)
+    img = cv2.imread(AmmarFilePath, 1)
     img = cv2.bitwise_not(img)
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thinned = cv2.ximgproc.thinning(cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY), thinningType=cv2.ximgproc.THINNING_ZHANGSUEN)
@@ -32,7 +32,7 @@ def main():
     img = cv2.imread(sobel_path, 0)
     img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)[1]
     num_labels, labels = cv2.connectedComponents(img)
-
+    print("Number of roots: ", num_labels-1) #-1 to remove the background component
     # labels = cv2.connectedComponentsWithStats(img, stats=cv2.CV_32S)
     # (numLabels, labels, stats, centroids) = labels
     #
@@ -87,6 +87,8 @@ def main():
     plt.axis('off')
     plt.title("Component Labeling Image")
     plt.show()
+
+
 
     # cv2.waitKey(0)
     cv2.destroyAllWindows()
