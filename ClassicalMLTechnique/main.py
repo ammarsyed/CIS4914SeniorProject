@@ -47,6 +47,41 @@ class StegerLineAlgorithm:
         phase = mag * 180. / np.pi
         return mag, phase
 
+    def computeHessian(self, img, dx, dy, dxx, dyy, dxy):
+        # create empty list
+        point = []
+        direction = []
+        value = []
+        # for the all image
+        for x in range(0, img.shape[1]):  # column
+            for y in range(0, img.shape[0]):  # line
+                # if superior to certain threshold
+                if dxy[y, x] > 0:
+                    # compute local hessian
+                    hessianMatrix = np.zeros((2, 2))
+                    hessianMatrix[0, 0] = dxx[y, x]
+                    hessianMatrix[0, 1] = dxy[y, x]
+                    hessianMatrix[1, 0] = dxy[y, x]
+                    hessianMatrix[1, 1] = dyy[y, x]
+                    # compute eigen vector and eigen value
+                    ret, eigenVal, eigenVect = cv2.eigen(hessianMatrix)
+                    if np.abs(eigenVal[0, 0]) >= np.abs(eigenVal[1, 0]):
+                        nx = eigenVect[0, 0]
+                        ny = eigenVect[0, 1]
+                    else:
+                        nx = eigenVect[1, 0]
+                        ny = eigenVect[1, 1]
+                    # calculate denominator for the taylor polynomial expension
+                    denom = dxx[y, x] * nx * nx + dyy[y, x] * ny * ny + 2 * dxy[y, x] * nx * ny
+                    # verify non zero denom
+                    if denom != 0:
+                        T = -(dx[y, x] * nx + dy[y, x] * ny) / denom
+                        # update point
+                        if np.abs(T * nx) <= 0.5 and np.abs(T * ny) <= 0.5:
+                            point.append((x, y))
+                            direction.append((nx, ny))
+                            value.append(np.abs(dxy[y, x] + dxy[y, x]))
+        return point, direction, value
 
 def initializeImage(img):
     # COMMENT FOLLOWING LINE IF USING UNET SEGMENTED ROOTS. UNCOMMENT IF USING GROUND TRUTH IMAGES
@@ -77,7 +112,8 @@ def getImageFromCommandLineArg():
         fileNameStartIndex = filePath.rfind("/")
         if(fileNameStartIndex == -1):
             fileNameStartIndex = filePath.rfind("\\")
-        fileName = filePath[fileNameStartIndex+1:]
+        fileNameEndsWith = filePath.rfind(".")
+        fileName = filePath[fileNameStartIndex+1:fileNameEndsWith]
         print(fileName)
         print(sys.argv[1])
         return fileName, img
@@ -123,6 +159,14 @@ def main():
     stegerLineAlgorithmObj = StegerLineAlgorithm()
     dx, dy, dxx, dyy, dxy = stegerLineAlgorithmObj.computeDerivatives(gray_img, 1.1, 1.1)
     normal, phase = stegerLineAlgorithmObj.computeMagnitude(dxx, dyy)
+
+    pt, dir, val = stegerLineAlgorithmObj.computeHessian(img, dx, dy, dxx, dyy, dxy)
+    idx = np.argsort(val)
+    idx = idx[::-1][:10000]
+    for i in range(0, len(idx)):
+        img = cv2.circle(img, (pt[idx[i]][0], pt[idx[i]][1]), 1, (255, 0, 0), 1)
+    outputImages(fileName, img)
+
 
     # Conversion
     cv2.imwrite('Test.png', phase)
