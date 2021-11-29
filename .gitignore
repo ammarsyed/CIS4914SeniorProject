@@ -129,3 +129,9 @@ dmypy.json
 .pyre/
 
 .idea
+*.jpg
+*.jpeg
+*.png
+*.h5
+*.pb
+logs/
