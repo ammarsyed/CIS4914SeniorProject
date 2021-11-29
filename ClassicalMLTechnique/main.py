@@ -165,7 +165,7 @@ def main():
     idx = idx[::-1][:10000]
     for i in range(0, len(idx)):
         img = cv2.circle(img, (pt[idx[i]][0], pt[idx[i]][1]), 1, (255, 0, 0), 1)
-    outputImages(fileName, img)
+    outputImages(fileName+"hessian", img)
 
 
     # Conversion
