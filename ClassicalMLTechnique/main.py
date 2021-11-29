@@ -8,24 +8,23 @@ import os
 class StegerLineAlgorithm:
 
     def computeDerivative(self, img, derivativeType):
-        match derivativeType:
-            case 'dx':
+        if derivativeType == 'dx':
                 dxKernel = np.array([[1], [0], [-1]])
                 dx = cv2.filter2D(img, -1, dxKernel)
                 return dx
-            case 'dy':
+        elif derivativeType == 'dy':
                 dyKernel = np.array([[1, 0, -1]])
                 dy = cv2.filter2D(img, -1, dyKernel)
                 return dy
-            case 'dxx':
+        elif derivativeType == 'dxx':
                 dxxKernel = np.array([[1], [-2], [1]])
                 dxx = cv2.filter2D(img, -1, dxxKernel)
                 return dxx
-            case 'dyy':
+        elif derivativeType == 'dyy':
                 dyyKernel = np.array([[1, -2, 1]])
                 dyy = cv2.filter2D(img, -1, dyyKernel)
                 return dyy
-            case 'dxy':
+        elif derivativeType == 'dxy':
                 dxyKernel = np.array([[1, -1], [-1, 1]])
                 dxy = cv2.filter2D(img, -1, dxyKernel)
                 return dxy
@@ -50,7 +49,8 @@ class StegerLineAlgorithm:
 
 
 def initializeImage(img):
-    img = cv2.bitwise_not(img)
+    # COMMENT FOLLOWING LINE IF USING UNET SEGMENTED ROOTS. UNCOMMENT IF USING GROUND TRUTH IMAGES
+    # img = cv2.bitwise_not(img)
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thinned = cv2.ximgproc.thinning(cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY),
                                     thinningType=cv2.ximgproc.THINNING_ZHANGSUEN)
@@ -73,7 +73,13 @@ def getImageFromCommandLineArg():
         sys.exit()
     else:
         filePath = sys.argv[1]
-        fileName = filePath[filePath.rindex("/"):]
+        print(filePath)
+        fileNameStartIndex = filePath.rfind("/")
+        if(fileNameStartIndex == -1):
+            fileNameStartIndex = filePath.rfind("\\")
+        fileName = filePath[fileNameStartIndex+1:]
+        print(fileName)
+        print(sys.argv[1])
         return fileName, img
 
 
@@ -84,7 +90,32 @@ def performConnectedComponentsAnalysis(image):
     return num_labels, labels
 
 
+
+
+
+def labelImage(labels):
+    label_hue = np.uint8(179 * labels / np.max(labels))
+    blank_ch = 255 * np.ones_like(label_hue)
+    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
+    labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
+    labeled_img[label_hue == 0] = 0
+
+    return labeled_img
+
+
+def outputImages(fileName, labeled_img):
+    # Image after Component Labeling
+    plt.imshow(cv2.cvtColor(labeled_img, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.title("Component Labeling Image")
+    if not os.path.exists("TraditionalLabeledImages"):
+        os.makedirs("TraditionalLabeledImages")
+    plt.savefig("TraditionalLabeledImages/TraditionalLabeled_" + fileName)
+    plt.show()
+
+
 def main():
+    print("hello")
     fileName, img = getImageFromCommandLineArg()
     gray_img = initializeImage(img)
 
@@ -107,26 +138,6 @@ def main():
     outputImages(fileName, labeled_img)
 
 
-if __name__ == "__name__":
+if __name__ == "__main__":
+    print("before main")
     main()
-
-
-def labelImage(labels):
-    label_hue = np.uint8(179 * labels / np.max(labels))
-    blank_ch = 255 * np.ones_like(label_hue)
-    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
-    labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
-    labeled_img[label_hue == 0] = 0
-
-    return labeled_img
-
-
-def outputImages(fileName, labeled_img):
-    # Image after Component Labeling
-    plt.imshow(cv2.cvtColor(labeled_img, cv2.COLOR_BGR2RGB))
-    plt.axis('off')
-    plt.title("Component Labeling Image")
-    if not os.path.exists("TraditionalLabeledImages"):
-        os.makedirs("TraditionalLabeledImages")
-    plt.savefig("TraditionalLabeledImages/TraditionalLabeled_" + fileName)
-    plt.show()
