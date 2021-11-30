@@ -208,13 +208,17 @@ def characterize_dir(dir_path='./masks', output_path='./characterization.csv', d
     with open(output_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([col.value for col in OutputColumn])
+        num_files = 0
         for root, dirs, files in os.walk(dir_path):
             for file in files:
+                num_files += 1
+                print(f'Progress for {root}: {num_files}/{len(files)}')
                 filepath = os.path.join(root, file)
-                if os.path.splitext(file)[1] == '.json':
+                ext = os.path.splitext(file)[1].lower()
+                if ext == '.json':
                     for output_row in characterize_json(filepath, debug_dir):
                         writer.writerow(list(output_row))
-                else:
+                elif ext in ['.png', '.jpg', '.jpeg', '.gif']:
                     writer.writerow(list(characterize_image(filepath, debug_dir)))
 
 
